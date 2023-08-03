@@ -1,3 +1,5 @@
+use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use serenity::async_trait;
 use serenity::prelude::*;
 use serenity::model::channel::Message;
@@ -15,6 +17,10 @@ impl EventHandler for Handler {}
 
 #[tokio::main]
 async fn main() {
+    dotenvy::dotenv().ok();
+
+    let pg_cnn = establish_connection(); 
+
     let framework = StandardFramework::new()
         .configure(|c| c.prefix(";"))
         .group(&GENERAL_GROUP);
@@ -31,6 +37,13 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("An error occurred while running the client: {:?}", why);
     }
+}
+
+fn establish_connection() -> PgConnection {
+    let database_url = dotenvy::var("DATABASE_URL").expect("No db url D:");
+
+    PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to db"))
 }
 
 #[command]
