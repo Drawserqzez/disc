@@ -3,10 +3,10 @@ mod models;
 mod schema;
 mod db;
 
-use std::fmt::Write as _;
-
 use commands::ping::PING_COMMAND;
 use commands::help::HELP_COMMAND;
+
+use commands::events;
 
 use db::setup::*;
 use serenity::prelude::*;
@@ -30,17 +30,7 @@ impl EventHandler for Bot {
 
         if msg.content.trim() == ";events list" {
             let cnn = &mut self.pool.get().expect("no connection allocated");
-
-            let events = models::event::EventList::list(cnn);
-
-            let mut response = format!("There are currently {} events\n", events.0.len());
-
-            for (i, event) in events.0.iter().enumerate() {
-                writeln!(response, "{}. {} @ {}", i + 1, event.name, event.event_time)
-                    .unwrap();
-            }
-
-            msg.channel_id.say(&ctx, response).await.unwrap();
+            events::list(&ctx, &msg, cnn).await;
         }
     }
 }
