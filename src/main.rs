@@ -3,6 +3,7 @@ mod models;
 mod schema;
 mod db;
 
+use chrono::{DateTime, Utc};
 use commands::bing::BING_COMMAND;
 use commands::ping::PING_COMMAND;
 use commands::help::HELP_COMMAND;
@@ -10,6 +11,7 @@ use commands::events;
 use commands::on_join;
 
 use db::setup::*;
+use models::event::NewEvent;
 use poise::serenity_prelude::Ready;
 use serenity::prelude::*;
 use serenity::async_trait;
@@ -29,7 +31,7 @@ struct Bot {
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        let _user_id = msg.author.id.0 as i64; // kept for now
+        let user_id = msg.author.id.0 as i64; // kept for now
         let cnn = &mut self.pool.get().expect("no connection allocated");
 
         if msg.content.trim() == ";events list" {
@@ -37,6 +39,29 @@ impl EventHandler for Bot {
         } else if let Some(event_id) = msg.content.strip_prefix(";events show") {
             let id = event_id.trim().parse::<i32>().unwrap();
             events::find(id, &ctx, &msg, cnn).await;
+        } else if let Some(event_data) = msg.content.strip_prefix(";events add") {
+            let creator = user_id;
+            let data: Vec<&str> = event_data.split_whitespace()
+                .collect();
+
+            // todo: fix the date time format, probably split date and time 
+            let time = DateTime::parse_from_str(data[1], "%Y-%m-%d@%H:%M");
+
+            if let Err(_) = time {
+                msg.reply(&ctx, format!("Felaktigt datumformat: {}", data[1])).await.unwrap();
+                return;
+            }
+
+            let utc_time = time.unwrap().with_timezone::<Utc>(&Utc);
+
+            let new_event = NewEvent {
+                name: data[0].to_string(),
+                owner: creator,
+                event_time: utc_time,
+                domain: data[2].to_string()
+            };
+
+            events::create(new_event, &ctx, &msg, cnn).await;
         } else if msg.content.trim() == ";welcometest" {
             let mut member = msg.guild(&ctx).unwrap()
                 .member(&ctx, msg.author.id)

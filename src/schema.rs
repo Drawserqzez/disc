@@ -6,5 +6,7 @@ diesel::table! {
         name -> Varchar,
         event_time -> Timestamptz,
         created_time -> Nullable<Timestamptz>,
+        domain -> Nullable<Varchar>,
+        owner -> Nullable<Int8>,
     }
 }

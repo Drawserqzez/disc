@@ -8,8 +8,20 @@ use diesel::{Queryable, PgConnection, Selectable};
 pub struct Event {
     pub id: i32,
     pub name: String, 
+    pub domain: Option<String>,
     pub event_time: DateTime<Utc>,
-    pub created_time: Option<DateTime<Utc>>
+    pub created_time: Option<DateTime<Utc>>,
+    pub owner: Option<i64>,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::events)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct NewEvent {
+    pub name: String,
+    pub event_time: DateTime<Utc>,
+    pub domain: String,
+    pub owner: i64,
 }
 
 impl Event {
