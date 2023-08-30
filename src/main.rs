@@ -1,35 +1,37 @@
-use std::fmt::Write as _;
+mod commands;
 mod models;
 mod schema;
-use diesel::pg::PgConnection;
-use diesel::r2d2::{ Pool, PooledConnection, ConnectionManager, PoolError };
-use serenity::async_trait;
+mod db;
+
+use std::fmt::Write as _;
+
+use commands::ping::PING_COMMAND;
+use commands::help::HELP_COMMAND;
+
+use db::setup::*;
 use serenity::prelude::*;
+use serenity::async_trait;
 use serenity::model::channel::Message;
-use serenity::framework::standard::macros::{command, group};
-use serenity::framework::standard::{StandardFramework, CommandResult};
+use serenity::framework::standard::StandardFramework;
+use serenity::framework::standard::macros::group;
 
 #[group]
-#[commands(ping)]
+#[commands(ping, help)]
 struct General;
 
 struct Bot {
     pool: PgPool
 }
 
-
-pub type PgPool = Pool<ConnectionManager<PgConnection>>;
-pub type PgPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
-
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        let user_id = msg.author.id.0 as i64;
+        let _user_id = msg.author.id.0 as i64; // kept for now
 
         if msg.content.trim() == ";events list" {
             let cnn = &mut self.pool.get().expect("no connection allocated");
 
-            let events = get_events(cnn).await;
+            let events = models::event::EventList::list(cnn);
 
             let mut response = format!("There are currently {} events\n", events.0.len());
 
@@ -41,10 +43,6 @@ impl EventHandler for Bot {
             msg.channel_id.say(&ctx, response).await.unwrap();
         }
     }
-}
-
-async fn get_events(cnn: &mut PgConnection) -> models::event::EventList {
-    models::event::EventList::list(cnn)
 }
 
 #[tokio::main]
@@ -73,23 +71,5 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("An error occurred while running the client: {:?}", why);
     }
-}
-
-fn establish_connection() -> PgPool {
-    let database_url = dotenvy::var("DATABASE_URL").expect("No db url D:");
-
-    init_pool(&database_url).expect("Failed to create pool ):")
-}
-
-fn init_pool(db_url: &str) -> Result<PgPool, PoolError> {
-    let manager = ConnectionManager::<PgConnection>::new(db_url);
-    Pool::builder().build(manager)
-}
-
-#[command]
-async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Pong!").await?;
-
-    Ok(())
 }
 
