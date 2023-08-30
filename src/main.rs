@@ -9,6 +9,7 @@ use commands::help::HELP_COMMAND;
 use commands::events;
 
 use db::setup::*;
+use poise::serenity_prelude::Ready;
 use serenity::prelude::*;
 use serenity::async_trait;
 use serenity::model::channel::Message;
@@ -35,6 +36,13 @@ impl EventHandler for Bot {
             let id = event_id.trim().parse::<i32>().unwrap();
             events::find(id, &ctx, &msg, cnn).await;
         }
+    }
+
+    //async fn guild_member_addition(&self, ctx: Context, msg: Message) {
+    //}
+
+    async fn ready(&self, ctx: Context, _data: Ready) {
+        ctx.set_activity(serenity::model::gateway::Activity::playing("aaaaaaaaaaaa")).await;
     }
 }
 
