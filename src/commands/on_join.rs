@@ -6,7 +6,7 @@ use serenity::model::guild::Guild;
 
 pub async fn choose_activities(ctx: &Context, member: &mut Member, guild_id: &GuildId) {
     let msg = member.user.direct_message(&ctx, |m| {
-            m.content("Vad vill du vara med på? Det kan ta upp till 30sekunder att få rollerna.")
+            m.content("Vad vill du vara med på?")
                 .reactions(vec![
                     ReactionType::Unicode("🥏".to_string()),
                     ReactionType::Unicode("🎲".to_string()),
@@ -24,6 +24,8 @@ pub async fn choose_activities(ctx: &Context, member: &mut Member, guild_id: &Gu
 
     let mut collector = msg.await_reactions(&ctx)
         .timeout(Duration::from_secs(60 * 3))
+        .added(true)
+        .removed(true)
         .build();
 
     loop {
@@ -45,6 +47,9 @@ pub async fn choose_activities(ctx: &Context, member: &mut Member, guild_id: &Gu
                     member.remove_role(&ctx, boardgame_role.id).await.unwrap();
                 }
             }
+        } else if let None = next {
+            msg.reply(&ctx, "Nu var tiden slut :(").await.unwrap();
+            return;
         }
     }
 }
