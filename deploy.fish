@@ -1,9 +1,7 @@
 #! /usr/bin/fish 
 
-cargo build --release
-
 docker-compose up -d
 
-./target/release/disc &
+./bin/disc &
 
 echo "Everything is deployed now :D"
