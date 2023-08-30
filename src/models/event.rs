@@ -12,6 +12,22 @@ pub struct Event {
     pub created_time: Option<DateTime<Utc>>
 }
 
+impl Event {
+    pub fn find(event_id: i32, cnn: &mut PgConnection) -> Option<Self> {
+        use crate::schema::events::dsl::*;
+
+        let result = events
+            .find(event_id)
+            .select(Event::as_select())
+            .first(cnn);
+
+        match result {
+            Ok(event) => Some(event),
+            Err(_) => None,
+        }
+    }
+}
+
 pub struct EventList(pub Vec<Event>);
 
 impl EventList {

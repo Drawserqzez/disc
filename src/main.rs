@@ -27,10 +27,13 @@ struct Bot {
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
         let _user_id = msg.author.id.0 as i64; // kept for now
+        let cnn = &mut self.pool.get().expect("no connection allocated");
 
         if msg.content.trim() == ";events list" {
-            let cnn = &mut self.pool.get().expect("no connection allocated");
             events::list(&ctx, &msg, cnn).await;
+        } else if let Some(event_id) = msg.content.strip_prefix(";events show") {
+            let id = event_id.trim().parse::<i32>().unwrap();
+            events::find(id, &ctx, &msg, cnn).await;
         }
     }
 }
