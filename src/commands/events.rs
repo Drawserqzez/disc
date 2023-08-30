@@ -10,8 +10,8 @@ pub async fn list(ctx: &Context, msg: &Message, cnn: &mut PgConnection) {
 
     let mut response = format!("There are currently {} events\n", events.0.len());
 
-    for (i, event) in events.0.iter().enumerate() {
-        writeln!(response, "{}. {} @ {}", i + 1, event.name, event.event_time)
+    for (_, event) in events.0.iter().enumerate() {
+        writeln!(response, "{}. {} @ {}", event.id, event.name, event.event_time)
             .unwrap();
     }
 
