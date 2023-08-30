@@ -1,3 +1,4 @@
+pub mod bing;
 pub mod ping;
 pub mod help;
 pub mod events;

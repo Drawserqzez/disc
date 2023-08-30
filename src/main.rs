@@ -3,6 +3,7 @@ mod models;
 mod schema;
 mod db;
 
+use commands::bing::BING_COMMAND;
 use commands::ping::PING_COMMAND;
 use commands::help::HELP_COMMAND;
 use commands::events;
@@ -18,7 +19,7 @@ use serenity::framework::standard::StandardFramework;
 use serenity::framework::standard::macros::group;
 
 #[group]
-#[commands(ping, help)]
+#[commands(bing, ping, help)]
 struct General;
 
 struct Bot {
