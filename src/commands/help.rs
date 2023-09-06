@@ -1,3 +1,5 @@
+use poise::serenity_prelude::CommandDataOption;
+use serenity::builder::CreateApplicationCommand;
 use serenity::prelude::*;
 use serenity::model::channel::Message;
 use serenity::framework::standard::CommandResult;
@@ -10,3 +12,11 @@ pub async fn help(ctx: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
+
+pub fn run(_options: &[CommandDataOption]) -> String {
+    "Sike you thought!".to_string()
+}
+
+pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
+    command.name("help").description("Help")
+}

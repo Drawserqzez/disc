@@ -12,9 +12,12 @@ use commands::on_join;
 
 use db::setup::*;
 use models::event::NewEvent;
+use poise::serenity_prelude::GuildId;
 use poise::serenity_prelude::Ready;
+use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::prelude::*;
 use serenity::async_trait;
+use serenity::model::application::command::Command;
 use serenity::model::channel::Message;
 use serenity::model::guild::Member;
 use serenity::framework::standard::StandardFramework;
@@ -30,6 +33,24 @@ struct Bot {
 
 #[async_trait]
 impl EventHandler for Bot {
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        if let Interaction::ApplicationCommand(command) = interaction {
+            let content = match command.data.name.as_str() {
+                "help" => commands::help::run(&command.data.options),
+                _ => "not implemented LOL".to_string(),
+            };
+
+            if let Err(why) = command
+                .create_interaction_response(&ctx, |resp| {
+                    resp.kind(InteractionResponseType::ChannelMessageWithSource)
+                        .interaction_response_data(|msg| msg.content(content))
+                }) 
+            .await
+            {
+                print!("error responding to slash command: {}", why);
+            }
+        }
+    }
     async fn message(&self, ctx: Context, msg: Message) {
         let user_id = msg.author.id.0 as i64; // kept for now
         let cnn = &mut self.pool.get().expect("no connection allocated");
@@ -78,8 +99,20 @@ impl EventHandler for Bot {
             .await;
     }
 
-    async fn ready(&self, ctx: Context, _data: Ready) {
+    async fn ready(&self, ctx: Context, data: Ready) {
         ctx.set_activity(serenity::model::gateway::Activity::playing("Mario Kart")).await;
+
+        for guild in data.guilds {
+            let _ = GuildId::set_application_commands(&guild.id, &ctx, |cmds| {
+                cmds.create_application_command(|cmd| commands::help::register(cmd))
+            })
+            .await;
+        }
+
+        let _ = Command::create_global_application_command(&ctx, |cmd| {
+            commands::help::register(cmd)
+        })
+        .await;
     }
 }
 
